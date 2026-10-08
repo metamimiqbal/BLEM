@@ -98,6 +98,25 @@
 **Remaining**
 - None
 
+## 2026-10-08 — Ignore Environment and Secret Files
+
+**Request**
+- Keep environment variables and secret material out of Git.
+
+**Changes**
+- `.gitignore` — Added rules for `.env` variants, secret/credential files and directories, and private key/certificate formats.
+- `.gitignore` — Added an exception so `.env.example` remains shareable.
+
+**Decisions**
+- Environment templates remain trackable for onboarding, while local overrides and credential material are ignored.
+
+**Verification**
+- `git check-ignore -v .env .env.local app.secret secrets/token credentials/user.json private.pem certificate.crt` — PASS
+- `git check-ignore -v --no-index .env.example` — PASS (explicitly unignored)
+
+**Remaining**
+- None
+
 ---
 
 ## 2026-10-08 — Remove MVP Badge from Logo
