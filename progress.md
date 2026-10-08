@@ -118,3 +118,21 @@
 **Remaining**
 - None
 
+## 2026-10-08 — Normalize Git Main Branch
+
+**Request**
+- Resolve `git push -u origin main` failing after the project folder was renamed from `social-media` to `BLEM`.
+
+**Changes**
+- Git metadata — Renamed the local branch from case-sensitive `Main` to `main` using a temporary branch name to avoid the macOS case-insensitive ref collision.
+- Git remote — Published `main` to `origin` and configured upstream tracking.
+
+**Decisions**
+- The parent-folder rename was not the direct cause; the local branch was named `Main` with an uppercase `M`, while the push command targeted lowercase `main`.
+
+**Verification**
+- `git status --short --branch` — PASS (`## main...origin/main`, clean worktree)
+- `git ls-remote --heads origin` — PASS (`refs/heads/main` points to `5e6e955`)
+
+**Remaining**
+- None
