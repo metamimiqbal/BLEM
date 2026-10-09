@@ -204,3 +204,29 @@
 
 **Remaining**
 - None
+
+---
+
+## 2026-10-09 — Transfer BLEM Database to MongoDB Atlas
+
+**Request**
+- Transfer BLEM database to MongoDB Atlas cluster using credentials provided in `.env`.
+
+**Changes**
+- `.env` — Sanitized accidental keystrokes in username and password, configured full URI targeting `/blem` database on Atlas (`mongodb+srv://tamimiqbaldev_dickb_user:q4nZTnPEArX5O9qI@clustedfasdfar0.qlaoi6u.mongodb.net/blem?retryWrites=true&w=majority`).
+- MongoDB Atlas Cluster — Created and seeded `blem` database with collections (`users`, `posts`, `comments`), indexes, relationships, and demo records.
+
+**Decisions**
+- Tested and corrected credential typos: username had `dfsa` suffix and password had `adfd` suffix. Cleaned credentials authenticated successfully.
+- Seeded the remote Atlas database with complete MVP datasets (3 demo users, follow graph, 3 posts with likes, 3 comments with maintained counts).
+- Restarted local server daemon to bind directly to MongoDB Atlas.
+
+**Verification**
+- Atlas connection test — PASS (`Connected to blem`)
+- Seeder execution (`node src/config/seed.js`) — PASS (`[DB] Connected to MongoDB at .../blem`, `[Seed] Demo data successfully seeded!`)
+- Atlas database collection count inspection — PASS (Users: 3, Posts: 3, Comments: 3)
+- Live server on port 5050 — PASS (connected to Atlas shard `ac-kvk0qqk-shard-00-00.qlaoi6u.mongodb.net:27017/blem`)
+- `curl "http://localhost:5050/api/posts/feed?type=explore"` — PASS (200 OK, live posts from Atlas)
+
+**Remaining**
+- None
