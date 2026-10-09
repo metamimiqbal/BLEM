@@ -98,6 +98,27 @@
 **Remaining**
 - None
 
+## 2026-10-08 — Verify Environment Secret Exposure
+
+**Request**
+- Confirm whether the previous GitHub commit contains `.env` after adding it to `.gitignore`.
+
+**Changes**
+- No source changes; inspected the Git index, reachable commit history, current commit tree, and `origin/main`.
+
+**Decisions**
+- No history rewrite was needed because `.env` was not tracked and is absent from both local and remote `main`.
+
+**Verification**
+- `git ls-files --error-unmatch .env` — PASS (not tracked)
+- `git log --all -- .env` — PASS (no commits contain `.env`)
+- `git ls-tree -r --name-only HEAD -- .env` — PASS (absent)
+- `git ls-tree -r --name-only origin/main -- .env` — PASS (absent)
+- `git status --short --ignored .env .gitignore` — PASS (`.env` is ignored)
+
+**Remaining**
+- None
+
 ## 2026-10-08 — Ignore Environment and Secret Files
 
 **Request**
@@ -152,6 +173,34 @@
 **Verification**
 - `git status --short --branch` — PASS (`## main...origin/main`, clean worktree)
 - `git ls-remote --heads origin` — PASS (`refs/heads/main` points to `5e6e955`)
+
+**Remaining**
+- None
+
+---
+
+## 2026-10-09 — Fix Mongoose Operation Buffering Timeout in Serverless Deployments (Vercel)
+
+**Request**
+- Fix issue where `post.find()` failed with `Operation posts.find() buffering timed out after 10000ms` when deployed to Vercel, identify root cause, implement minimal necessary change, and run the program.
+
+**Changes**
+- `src/config/db.js` — Added connection promise caching (`cachedPromise`) to prevent race conditions during concurrent cold start requests; increased cloud server selection timeout to 5000ms; reset cache on `disconnectDB()`.
+- `src/app.js` — Added database connection middleware (`app.use('/api', async (req, res, next) => { await connectDB(); next(); })`) ensuring that database connections are initialized and awaited on serverless invocations before route handlers execute.
+- `src/server.js` — Wrapped `startServer()` in `require.main === module` check and exported `app` to support modular imports while preserving standalone CLI execution.
+- `tests/feed.test.js` — Added integration test verifying automated database connection and `Post.find()` execution on simulated serverless cold starts.
+
+**Decisions**
+- Root cause: In serverless environments (e.g., Vercel), requests execute via `src/app.js` rather than `src/server.js`. `connectDB()` was only invoked inside `startServer()` in `src/server.js`, leaving Mongoose disconnected (`readyState === 0`). Queries like `Post.find()` were queued in Mongoose's internal buffer until timing out at 10,000ms.
+- Ensuring `connectDB()` executes in `/api` middleware guarantees connection before querying, with negligible overhead (0ms when already connected) in both serverless and persistent container modes.
+
+**Verification**
+- Reproduction test: Reproduced `Operation posts.find() buffering timed out after 10000ms` prior to fix — PASS (reproduced)
+- `node --test tests/feed.test.js` — PASS (includes cold-start lifecycle test)
+- `npm test` — PASS (33 of 33 tests passing across 19 suites)
+- `npm start` — PASS (running on port 5050)
+- `curl http://localhost:5050/api/health` — PASS (`{"success":true,"message":"BLEM API server is running smoothly",...}`)
+- `curl http://localhost:5050/api/posts/feed?type=explore` — PASS (returned posts array with status 200)
 
 **Remaining**
 - None

@@ -45,7 +45,10 @@ const gracefulShutdown = async (signal) => {
   }
 };
 
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+if (require.main === module) {
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  startServer();
+}
 
-startServer();
+module.exports = app;

@@ -15,6 +15,8 @@ describe('Feed API Endpoints', () => {
 
   after(async () => {
     await teardownTestDb();
+    const { disconnectDB } = require('../src/config/db');
+    await disconnectDB();
   });
 
   beforeEach(async () => {
@@ -124,5 +126,20 @@ describe('Feed API Endpoints', () => {
     assert.equal(res.status, 200);
     assert.equal(res.body.data.feedType, 'explore_fallback');
     assert.equal(res.body.data.posts.length, 3);
+  });
+
+  it('should automatically connect to database and handle posts.find() on serverless cold start', async () => {
+    const { disconnectDB } = require('../src/config/db');
+    const mongoose = require('mongoose');
+
+    // Simulate serverless cold start (disconnected state)
+    await disconnectDB();
+    assert.equal(mongoose.connection.readyState, 0);
+
+    const res = await request(app).get('/api/posts/feed?type=explore');
+    assert.equal(res.status, 200);
+    assert.equal(res.body.success, true);
+    assert.equal(mongoose.connection.readyState, 1);
+    assert.ok(Array.isArray(res.body.data.posts));
   });
 });

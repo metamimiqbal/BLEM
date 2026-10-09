@@ -5,6 +5,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 
 const env = require('./config/env');
+const { connectDB } = require('./config/db');
 const apiRoutes = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
 const notFound = require('./middleware/notFound');
@@ -33,6 +34,16 @@ app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
 // Static frontend assets
 app.use(express.static(path.join(__dirname, '../public')));
+
+// Database connection middleware for API routes (ensures connection in serverless like Vercel)
+app.use('/api', async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 // API Routes
 app.use('/api', apiRoutes);
